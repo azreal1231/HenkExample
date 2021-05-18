@@ -116,6 +116,14 @@ class MainActivity : AppCompatActivity() {
 //        read_json(applicationContext)
 
         login(this)
+
+        val jwt = get_jwt(this)
+        print(jwt)
+
+        val session_data = get_SessionData(this)
+        print(session_data)
+
+        getUserDetails(this)
     }
 
     fun login(_ctx: Context){
@@ -150,6 +158,8 @@ class MainActivity : AppCompatActivity() {
                             json_response.put("OnlineSettings", response)
                             saveTo_txt("login_details.txt", json_response.toString(), "", this)
 
+
+
                         } catch (e: Exception) {
                             alert(this, "Error with Server")
                         }
@@ -171,4 +181,53 @@ class MainActivity : AppCompatActivity() {
             println(e)
         }
     }
+
+    fun getUserDetails(_ctx: Context){
+        try {
+
+
+        val innerParams = HashMap<String, String>()
+        innerParams["st"] = "current"
+        innerParams["sv"] = ""
+
+
+        val params = HashMap<String, String>()
+        params["jwt"] = get_jwt(this)
+        params["de"] = "getUserDetails"
+//        params["SessionData"] = get_SessionData(this)
+
+
+        val jsonObject = JSONObject(params as Map<*, *>)
+        val bleh = JSONObject(innerParams as Map<*, *>)
+        jsonObject.put("params", bleh)
+        jsonObject.put("SessionData", get_SessionData(this))
+
+        val request = JsonObjectRequest(
+                Request.Method.POST, "http://hmp.slatelight.co.za/external_api", jsonObject,
+
+                { response ->
+                    try {
+                        print(response)
+
+                    } catch (e: Exception) {
+                        alert(this, "Error with Server")
+                    }
+
+                }, {
+            print("$it")
+            alert(this, "Request TimeOut")
+        })
+        request.retryPolicy = DefaultRetryPolicy(
+                15000, // TimeOut
+                0, // DefaultRetryPolicy.DEFAULT_MAX_RETRIES = 2
+                1f // DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+        )
+
+        val contect = _ctx
+        VolleySingleton.getInstance(contect).addToRequestQueue(request)
+    } catch (e: IOException) {
+        println(e)
+        }
+    }
+
 }
